@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>MutuCraft</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#00d4ff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MutuCraft">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=JetBrains+Mono:wght@400;500&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
+<style>
+:root{
+  --bg:#080c10;--surface:#0f1419;--surface2:#161d26;--surface3:#1e2733;
+  --border:#1e2d3d;--accent:#00d4ff;--accent2:#0099bb;--gold:#f59e0b;
+  --red:#ef4444;--green:#22c55e;--purple:#a78bfa;
+  --text:#e0eaf5;--muted:#4a6080;--muted2:#6b8aaa;
+  --glow:0 0 20px rgba(0,212,255,.2);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;overflow-x:hidden;
+  background-image:radial-gradient(ellipse at 20% 0%,rgba(0,212,255,.06) 0%,transparent 50%),
+    radial-gradient(ellipse at 80% 100%,rgba(0,153,187,.05) 0%,transparent 50%)}
+
+/* HEADER */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 18px;
+  display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50;backdrop-filter:blur(20px)}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  animation:pglow 3s ease-in-out infinite}
+@keyframes pglow{0%,100%{box-shadow:0 0 10px rgba(0,212,255,.3)}50%{box-shadow:0 0 22px rgba(0,212,255,.65)}}
+.app-title{font-family:'Orbitron',monospace;font-size:17px;font-weight:800;
+  background:linear-gradient(90deg,var(--accent),#7dd3fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:1px}
+.app-sub{font-size:9px;color:var(--muted2);font-family:'JetBrains Mono',monospace;letter-spacing:2px;text-transform:uppercase;margin-top:1px}
+
+/* TABS */
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 14px;gap:2px}
+.tab-btn{flex:1;padding:11px 8px;background:none;border:none;border-bottom:2px solid transparent;
+  color:var(--muted2);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;
+  transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px;letter-spacing:.5px}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn svg{opacity:.5;transition:.2s}.tab-btn.active svg{opacity:1}
+
+/* PAGES */
+.page{display:none;padding:14px;max-width:600px;margin:0 auto}
+.page.active{display:block}
+
+/* DROP ZONE */
+.drop-zone{border:2px dashed var(--border);border-radius:14px;padding:26px 20px;text-align:center;
+  cursor:pointer;transition:all .3s;background:var(--surface);position:relative;overflow:hidden}
+.drop-zone::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,212,255,.04),transparent);opacity:0;transition:.3s}
+.drop-zone:hover::before,.drop-zone.dragging::before{opacity:1}
+.drop-zone:hover,.drop-zone.dragging{border-color:var(--accent);box-shadow:var(--glow)}
+.drop-icon{width:42px;height:42px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,212,255,.1);border-radius:50%;border:1px solid rgba(0,212,255,.2)}
+.drop-title{font-family:'Orbitron',monospace;font-size:13px;font-weight:600;color:var(--accent);margin-bottom:3px}
+.drop-sub{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+#file-input{display:none}
+
+/* SECTION LABEL */
+.slabel{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:2px;margin:16px 0 9px;display:flex;align-items:center;gap:8px}
+.slabel::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ═══ LAYER PANEL ═══ */
+.layer-panel{background:var(--surface2);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+
+.layer-header{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.layer-title{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:1.5px}
+.sel-all-btn{display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;color:var(--muted2);font-size:11px;font-family:'Nunito',sans-serif;font-weight:700;padding:4px 8px;border-radius:6px;transition:.2s}
+.sel-all-btn:hover{color:var(--accent);background:rgba(0,212,255,.06)}
+.sel-all-btn svg{width:14px;height:14px}
+
+.layer-list{display:flex;flex-direction:column}
+
+/* Individual layer row */
+.layer-row{display:flex;align-items:stretch;border-bottom:1px solid var(--border);transition:background .15s,transform .15s;position:relative;cursor:default;user-select:none}
+.layer-row:last-child{border-bottom:none}
+.layer-row.dragging-row{opacity:.5;background:rgba(0,212,255,.04)}
+.layer-row.drag-over{background:rgba(0,212,255,.08);border-top:2px solid var(--accent)}
+.layer-row.checked{background:rgba(0,212,255,.04)}
+
+/* Drag handle */
+.drag-handle{width:28px;display:flex;align-items:center;justify-content:center;cursor:grab;color:var(--muted);flex-shrink:0;transition:color .2s}
+.drag-handle:hover{color:var(--accent)}
+.drag-handle:active{cursor:grabbing}
+
+/* Checkbox col */
+.layer-check-col{width:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer}
+.lchk{width:18px;height:18px;border:1.5px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.layer-row.checked .lchk{background:var(--accent);border-color:var(--accent)}
+
+/* Track number */
+.track-num{width:22px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);flex-shrink:0}
+
+/* Waveform mini viz */
+.layer-wave{width:40px;height:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0 4px}
+canvas.mini-wave{width:36px;height:28px;border-radius:4px;background:rgba(0,212,255,.04)}
+
+/* Info */
+.layer-info{flex:1;min-width:0;padding:9px 6px;display:flex;flex-direction:column;gap:2px;cursor:pointer}
+.layer-name{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.layer-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:2px}
+.lbadge{font-family:'JetBrains Mono',monospace;font-size:9px;padding:1px 6px;border-radius:10px}
+.lbadge.size{color:var(--muted);background:rgba(255,255,255,.04)}
+.lbadge.trim{color:var(--gold);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2)}
+.lbadge.fx{color:var(--purple);background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.2)}
+
+/* Action icons */
+.layer-actions{display:flex;align-items:center;gap:1px;padding:0 6px;flex-shrink:0}
+.lact-btn{width:32px;height:32px;background:none;border:none;cursor:pointer;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;color:var(--muted);transition:all .2s}
+.lact-btn:hover{background:var(--surface3)}
+.lact-btn.trim:hover{color:var(--gold)}
+.lact-btn.fx:hover{color:var(--purple)}
+.lact-btn.del:hover{color:var(--red)}
+
+/* FX Expand panel */
+.layer-fx{border-top:1px solid var(--border);padding:12px 14px;display:none;flex-direction:column;gap:9px;background:rgba(0,0,0,.2)}
+.layer-fx.open{display:flex}
+.fx-row{display:flex;align-items:center;gap:8px}
+.fx-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);width:44px;flex-shrink:0;text-transform:uppercase;letter-spacing:.5px}
+.fx-val{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);width:38px;text-align:right;flex-shrink:0}
+input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:3px;border-radius:3px;background:var(--surface3);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px rgba(0,212,255,.5);cursor:pointer}
+.fx-pills{display:flex;gap:5px;flex-wrap:wrap}
+.fx-pill{padding:4px 10px;background:var(--surface3);border:1px solid var(--border);border-radius:20px;
+  font-size:10px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;color:var(--muted2);transition:all .2s}
+.fx-pill.on{background:rgba(167,139,250,.12);border-color:var(--purple);color:var(--purple)}
+.fx-pill.gold.on{background:rgba(245,158,11,.1);border-color:var(--gold);color:var(--gold)}
+
+/* EXPORT */
+.export-row{display:flex;gap:8px;margin-top:12px;align-items:flex-end}
+.inp-grp{flex:1}
+.inp-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;display:block}
+.styled-input,.styled-select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;transition:border-color .2s;-webkit-appearance:none}
+.styled-input:focus,.styled-select:focus{border-color:var(--accent)}
+.styled-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5 4.5-5z' fill='%234a6080'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:26px}
+.btn-row{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:12px 8px;border:none;border-radius:11px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;box-shadow:0 4px 14px rgba(0,212,255,.28)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,212,255,.38)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--gold);color:var(--gold)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none !important}
+
+/* PROGRESS */
+.prog-wrap{margin-top:12px;display:none}
+.prog-wrap.show{display:block}
+.prog-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);margin-bottom:5px;display:flex;justify-content:space-between}
+.prog-bg{background:var(--surface2);border-radius:100px;height:5px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),#7dd3fc);border-radius:100px;transition:width .3s;width:0%;box-shadow:0 0 8px var(--accent)}
+
+/* ═══ LIBRARY ═══ */
+.lib-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.lib-title{font-family:'Orbitron',monospace;font-size:12px;color:var(--accent);letter-spacing:1px}
+.lib-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)}
+.lib-list{display:flex;flex-direction:column;gap:8px}
+
+.lib-card{background:var(--surface2);border:1px solid var(--border);border-radius:13px;overflow:hidden;transition:border-color .15s}
+.lib-card:hover{border-color:rgba(0,212,255,.25)}
+.lib-top{padding:12px 13px;display:flex;align-items:center;gap:10px}
+.lib-icon-wrap{width:36px;height:36px;background:linear-gradient(135deg,rgba(0,212,255,.12),rgba(0,153,187,.08));border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(0,212,255,.15)}
+.lib-name{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);word-break:break-all;margin-bottom:2px}
+.lib-meta{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.lib-actions{border-top:1px solid var(--border);padding:6px 8px;display:flex;gap:2px}
+.lib-btn{flex:1;padding:7px 4px;background:none;border:none;border-radius:7px;font-size:10px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted2)}
+.lib-btn:hover{background:var(--surface3)}
+.lib-btn.play:hover{color:var(--green)}
+.lib-btn.dl:hover{color:var(--accent)}
+.lib-btn.ren:hover{color:var(--gold)}
+.lib-btn.del:hover{color:var(--red)}
+.lib-btn svg{width:16px;height:16px}
+.lib-player-wrap{padding:0 13px 11px;display:none}
+.lib-player-wrap.show{display:block}
+.lib-player-wrap audio{width:100%;height:34px;border-radius:7px;filter:invert(.9) hue-rotate(185deg) saturate(2)}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty svg{opacity:.3;margin-bottom:10px}
+.empty-txt{font-size:13px;font-family:'JetBrains Mono',monospace}
+
+/* TOAST */
+#toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(18px);background:var(--surface3);border:1px solid var(--border);border-radius:11px;padding:10px 18px;font-size:12px;font-weight:700;opacity:0;transition:all .28s;z-index:999;white-space:nowrap;max-width:90vw;text-align:center;backdrop-filter:blur(20px)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.success{border-color:var(--green);color:var(--green)}
+#toast.error{border-color:var(--red);color:var(--red)}
+#toast.info{border-color:var(--accent);color:var(--accent)}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--surface2);border:1px solid var(--border);border-radius:18px;padding:22px;width:100%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.modal-title{font-family:'Orbitron',monospace;font-size:13px;color:var(--accent);margin-bottom:14px}
+.modal-btns{display:flex;gap:8px;margin-top:14px}
+.mbtn-cancel{flex:1;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:9px;color:var(--muted2);font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;cursor:pointer}
+.mbtn-ok{flex:1;padding:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:9px;color:#000;font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;cursor:pointer}
+
+/* TRIM MODAL */
+#trim-modal{position:fixed;inset:0;background:rgba(0,0,0,.94);backdrop-filter:blur(18px);z-index:300;display:none;flex-direction:column}
+#trim-modal.show{display:flex}
+.trim-header{padding:13px 17px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.trim-title{font-family:'Orbitron',monospace;font-size:12px;color:var(--gold);display:flex;align-items:center;gap:8px}
+.trim-close{background:none;border:none;color:var(--muted2);cursor:pointer;padding:4px 8px;border-radius:7px;transition:.2s;display:flex;align-items:center;justify-content:center}
+.trim-close:hover{color:var(--red);background:rgba(239,68,68,.1)}
+.trim-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:11px}
+.wave-wrap{position:relative;background:var(--surface2);border:1px solid var(--border);border-radius:11px;overflow:hidden;touch-action:none}
+#trim-canvas{display:block;width:100%;height:120px;cursor:crosshair}
+.wave-loading{position:absolute;inset:0;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);gap:8px}
+.wave-spin{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.time-bar{display:flex;justify-content:space-between;padding:7px 11px;background:rgba(0,0,0,.28);border-radius:9px;font-family:'JetBrains Mono',monospace;font-size:10px}
+.ts{color:var(--green)}.te{color:var(--red)}.td{color:var(--accent)}
+.fine-row{display:flex;gap:8px}
+.fine-grp{flex:1}
+.fine-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.fine-inp{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;width:100%;outline:none;-webkit-appearance:none}
+.fine-inp:focus{border-color:var(--accent)}
+.rchips{display:flex;gap:5px;flex-wrap:wrap}
+.rchip{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 7px;border-radius:20px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.12);color:var(--muted2)}
+.trim-acts{display:flex;gap:6px}
+.tact{flex:1;padding:10px 6px;border:none;border-radius:9px;font-family:'Nunito',sans-serif;font-weight:700;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:.2s}
+.tact.prev{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:var(--green)}
+.tact.prev:hover{background:rgba(34,197,94,.2)}
+.tact.sil{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.25);color:var(--purple)}
+.tact.sil:hover{background:rgba(167,139,250,.2)}
+.tact.rst{background:var(--surface2);border:1px solid var(--border);color:var(--muted2)}
+.tact.apl{background:linear-gradient(135deg,var(--gold),#d97706);color:#000;box-shadow:0 3px 12px rgba(245,158,11,.25)}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- SVG ICON DEFS (hidden) -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="ic-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/>
+  </symbol>
+  <symbol id="ic-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+  </symbol>
+  <symbol id="ic-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+  </symbol>
+  <symbol id="ic-merge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 3v12"/><path d="M18 9a3 3 0 01-3 3H9a3 3 0 00-3 3v3"/><path d="M18 3v12"/>
+  </symbol>
+  <symbol id="ic-scissors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/>
+  </symbol>
+  <symbol id="ic-sliders" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>
+  </symbol>
+  <symbol id="ic-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+  </symbol>
+  <symbol id="ic-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="5 3 19 12 5 21 5 3"/>
+  </symbol>
+  <symbol id="ic-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+  </symbol>
+  <symbol id="ic-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </symbol>
+  <symbol id="ic-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+  </symbol>
+  <symbol id="ic-drag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+    <line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/>
+  </symbol>
+  <symbol id="ic-music" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+  </symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </symbol>
+  <symbol id="ic-waveform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+    <path d="M2 12h2M6 8v8M10 5v14M14 9v6M18 7v10M22 12h-2"/>
+  </symbol>
+  <symbol id="ic-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+  </symbol>
+  <symbol id="ic-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
+  </symbol>
+  <symbol id="ic-silence" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6"/><path d="M17 16.95A7 7 0 015 12v-2m14 0v2a7 7 0 01-.11 1.23"/>
+  </symbol>
+</svg>
+
+<header>
+  <div class="logo-icon">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><use href="#ic-waveform"/></svg>
+  </div>
+  <div>
+    <div class="app-title">MutuCraft</div>
+    <div class="app-sub">WAV → MP3 Studio</div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('convert',this)">
+    <svg width="14" height="14"><use href="#ic-bolt"/></svg> Convert
+  </button>
+  <button class="tab-btn" onclick="switchTab('folder',this)">
+    <svg width="14" height="14"><use href="#ic-folder"/></svg> My Files
+    <span id="badge" style="display:none;background:var(--accent);color:#000;border-radius:20px;padding:1px 6px;font-size:9px;font-weight:800"></span>
+  </button>
+</div>
+
+<!-- ═══ CONVERT ═══ -->
+<div class="page active" id="page-convert">
+  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <div class="drop-icon">
+      <svg width="20" height="20" stroke="var(--accent)"><use href="#ic-mic"/></svg>
+    </div>
+    <div class="drop-title">Select WAV Files</div>
+    <div class="drop-sub">tap here or drag & drop · multiple supported</div>
+  </div>
+  <input type="file" id="file-input" accept=".wav,audio/wav" multiple>
+
+  <div id="tracks-section" style="display:none">
+    <div class="slabel">tracks</div>
+    <div class="layer-panel">
+      <div class="layer-header">
+        <div class="layer-title">
+          <svg width="12" height="12" style="vertical-align:middle;margin-right:4px"><use href="#ic-grid"/></svg>
+          Layer Order
+        </div>
+        <button class="sel-all-btn" onclick="toggleSelectAll()">
+          <svg width="14" height="14"><use href="#ic-check"/></svg>
+          <span id="sel-all-txt">Select All</span>
+        </button>
+      </div>
+      <div class="layer-list" id="layer-list"></div>
+    </div>
+
+    <div class="slabel">export</div>
+    <div class="export-row">
+      <div class="inp-grp">
+        <label class="inp-lbl">Output Filename</label>
+        <input class="styled-input" id="out-name" type="text" placeholder="output" value="output">
+      </div>
+      <div class="inp-grp" style="flex:0 0 108px">
+        <label class="inp-lbl">Bitrate</label>
+        <select class="styled-select" id="bitrate">
+          <option value="128">128 kbps</option>
+          <option value="192" selected>192 kbps</option>
+          <option value="320">320 kbps</option>
+        </select>
+      </div>
+    </div>
+    <div class="prog-wrap" id="prog-wrap">
+      <div class="prog-label"><span id="prog-txt">Processing...</span><span id="prog-pct">0%</span></div>
+      <div class="prog-bg"><div class="prog-fill" id="prog-fill"></div></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-convert" onclick="doConvert()">
+        <svg width="15" height="15"><use href="#ic-bolt"/></svg> Convert
+      </button>
+      <button class="btn btn-secondary" id="btn-merge" onclick="doMerge()">
+        <svg width="15" height="15"><use href="#ic-merge"/></svg> Merge
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FOLDER ═══ -->
+<div class="page" id="page-folder">
+  <div class="lib-header">
+    <div class="lib-title">Saved Files</div>
+    <div class="lib-count" id="lib-count">0 files</div>
+  </div>
+  <div class="lib-list" id="lib-list">
+    <div class="empty">
+      <svg width="48" height="48" stroke="var(--muted)"><use href="#ic-music"/></svg>
+      <div class="empty-txt">No files yet.<br>Convert something first!</div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- Rename Modal -->
+<div class="modal-overlay" id="rename-modal">
+  <div class="modal">
+    <div class="modal-title">Rename File</div>
+    <label class="inp-lbl">New filename (without .mp3)</label>
+    <input class="styled-input" id="rename-input" type="text" placeholder="new name">
+    <div class="modal-btns">
+      <button class="mbtn-cancel" onclick="closeRenameModal()">Cancel</button>
+      <button class="mbtn-ok" onclick="confirmRename()">Rename</button>
+    </div>
+  </div>
+</div>
+
+<!-- Trim Modal -->
+<div id="trim-modal">
+  <div class="trim-header">
+    <div class="trim-title">
+      <svg width="14" height="14"><use href="#ic-scissors"/></svg>
+      Trim Editor
+    </div>
+    <button class="trim-close" onclick="closeTrimModal()">
+      <svg width="16" height="16"><use href="#ic-close"/></svg>
+    </button>
+  </div>
+  <div class="trim-body">
+    <div class="wave-wrap" id="wave-wrap">
+      <canvas id="trim-canvas"></canvas>
+      <div class="wave-loading" id="wave-loading"><div class="wave-spin"></div> Decoding audio...</div>
+    </div>
+    <div class="time-bar">
+      <span class="ts">▶ <span id="t-start">0:00.000</span></span>
+      <span class="td">⏱ <span id="t-dur">0:00.000</span></span>
+      <span class="te"><span id="t-end">0:00.000</span> ◀</span>
+    </div>
+    <div class="fine-row">
+      <div class="fine-grp">
+        <div class="fine-lbl">Start (sec)</div>
+        <input class="fine-inp" id="fine-start" type="number" step="0.01" min="0" oninput="onFineInput()">
+      </div>
+      <div class="fine-grp">
+        <div class="fine-lbl">End (sec)</div>
+        <input class="fine-inp" id="fine-end" type="number" step="0.01" min="0" oninput="onFineInput()">
+      </div>
+    </div>
+    <div class="rchips" id="rchips"></div>
+    <div class="trim-acts">
+      <button class="tact prev" onclick="previewTrim()">
+        <svg width="12" height="12"><use href="#ic-play"/></svg> Preview
+      </button>
+      <button class="tact sil" onclick="autoTrimSilence()">
+        <svg width="12" height="12"><use href="#ic-silence"/></svg> Auto Trim
+      </button>
+      <button class="tact rst" onclick="resetTrim()">
+        <svg width="12" height="12"><use href="#ic-refresh"/></svg> Reset
+      </button>
+    </div>
+    <div class="trim-acts">
+      <button class="tact apl" onclick="applyTrim()" style="flex:2">
+        <svg width="12" height="12"><use href="#ic-check"/></svg> Apply Trim
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════
+let SF=[],FS=[],DC=[],CF=new Set(),renameTarget=null;
+// Trim
+let tIdx=-1,tBuf=null,tSR=0,tER=1,tDrag=null,tPrevSrc=null,tPrevCtx=null;
+// Drag-to-reorder
+let dragSrcIdx=null;
+
+// ══════════════════════════════════════
+//  DB (string IDs to avoid float issues)
+// ══════════════════════════════════════
+const DB_NAME='MutuCraft4',STORE='mp3files';let db;
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=e=>e.target.result.createObjectStore(STORE,{keyPath:'id'});r.onsuccess=e=>{db=e.target.result;res()};r.onerror=rej})}
+function dbSave(rec){return new Promise((res,rej)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(rec);tx.oncomplete=res;tx.onerror=rej})}
+function dbAll(){return new Promise((res,rej)=>{const r=db.transaction(STORE,'readonly').objectStore(STORE).getAll();r.onsuccess=e=>res(e.target.result||[]);r.onerror=rej})}
+function dbDel(id){return new Promise((res,rej)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(id);tx.oncomplete=res;tx.onerror=rej})}
+async function dbUpd(id,u){return new Promise((res,rej)=>{const tx=db.transaction(STORE,'readwrite'),s=tx.objectStore(STORE),r=s.get(id);r.onsuccess=e=>s.put({...e.target.result,...u});tx.oncomplete=res;tx.onerror=rej})}
+
+// ══════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════
+function switchTab(t,el){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('page-'+t).classList.add('active');
+  if(t==='folder')renderLib();
+}
+
+// ══════════════════════════════════════
+//  FILE INPUT
+// ══════════════════════════════════════
+const DZ=document.getElementById('drop-zone'),FI=document.getElementById('file-input');
+FI.addEventListener('change',e=>{addFiles(Array.from(e.target.files));FI.value=''});
+DZ.addEventListener('dragover',e=>{e.preventDefault();DZ.classList.add('dragging')});
+DZ.addEventListener('dragleave',()=>DZ.classList.remove('dragging'));
+DZ.addEventListener('drop',e=>{e.preventDefault();DZ.classList.remove('dragging');addFiles(Array.from(e.dataTransfer.files).filter(f=>f.name.toLowerCase().endsWith('.wav')))});
+
+function addFiles(files){
+  files.forEach(f=>{
+    if(!SF.find(x=>x.name===f.name&&x.size===f.size)){
+      SF.push(f);FS.push({startTime:0,endTime:null,_dur:null,volume:1,speed:1,fadeIn:false,fadeOut:false,normalize:false});
+      DC.push(null);CF.add(SF.length-1);
+    }
+  });renderList();
+}
+function removeFile(i){SF.splice(i,1);FS.splice(i,1);DC.splice(i,1);const nc=new Set();CF.forEach(x=>{if(x<i)nc.add(x);else if(x>i)nc.add(x-1)});CF=nc;renderList()}
+function toggleCheck(i){if(CF.has(i))CF.delete(i);else CF.add(i);renderList()}
+function toggleSelectAll(){if(CF.size===SF.length)CF.clear();else SF.forEach((_,i)=>CF.add(i));renderList()}
+function toggleFX(i){const p=document.getElementById('fx-'+i);if(p)p.classList.toggle('open')}
+
+// ══════════════════════════════════════
+//  DRAG TO REORDER
+// ══════════════════════════════════════
+function onDragStart(i,e){dragSrcIdx=i;e.dataTransfer.effectAllowed='move';e.currentTarget.closest('.layer-row').classList.add('dragging-row')}
+function onDragEnd(e){e.currentTarget.closest('.layer-row').classList.remove('dragging-row');document.querySelectorAll('.layer-row').forEach(r=>r.classList.remove('drag-over'))}
+function onDragOver(i,e){e.preventDefault();e.dataTransfer.dropEffect='move';document.querySelectorAll('.layer-row').forEach(r=>r.classList.remove('drag-over'));if(i!==dragSrcIdx)document.getElementById('lr-'+i).classList.add('drag-over')}
+function onDrop(i,e){
+  e.preventDefault();
+  document.querySelectorAll('.layer-row').forEach(r=>r.classList.remove('drag-over'));
+  if(dragSrcIdx===null||dragSrcIdx===i)return;
+  const si=dragSrcIdx;
+  SF.splice(i,0,SF.splice(si,1)[0]);FS.splice(i,0,FS.splice(si,1)[0]);DC.splice(i,0,DC.splice(si,1)[0]);
+  const nc=new Set(),arr=[...CF].map(x=>{if(x===si)return i;if(si<i&&x>si&&x<=i)return x-1;if(si>i&&x>=i&&x<si)return x+1;return x});
+  arr.forEach(x=>nc.add(x));CF=nc;dragSrcIdx=null;renderList();
+}
+
+// ══════════════════════════════════════
+//  RENDER LAYER LIST
+// ══════════════════════════════════════
+function renderList(){
+  const sec=document.getElementById('tracks-section'),list=document.getElementById('layer-list');
+  if(!SF.length){sec.style.display='none';return}
+  sec.style.display='block';
+
+  list.innerHTML=SF.map((f,i)=>{
+    const s=FS[i],ck=CF.has(i);
+    const hasTrim=s.endTime!==null&&s._dur!==null&&(s.startTime>0.01||s.endTime<s._dur-0.01);
+    const hasFX=s.volume!==1||s.speed!==1||s.fadeIn||s.fadeOut||s.normalize;
+    const badges=[];
+    badges.push(`<span class="lbadge size">${fsz(f.size)}</span>`);
+    if(hasTrim)badges.push(`<span class="lbadge trim">${ftm(s.startTime)}–${ftm(s.endTime)}</span>`);
+    if(hasFX){const fxTags=[];if(s.volume!==1)fxTags.push(`${s.volume.toFixed(1)}x`);if(s.speed!==1)fxTags.push(`${s.speed.toFixed(2)}spd`);if(s.fadeIn)fxTags.push('FI');if(s.fadeOut)fxTags.push('FO');if(s.normalize)fxTags.push('NRM');badges.push(`<span class="lbadge fx">${fxTags.join(' · ')}</span>`)}
+    return `<div class="layer-row ${ck?'checked':''}" id="lr-${i}" draggable="true"
+        ondragstart="onDragStart(${i},event)" ondragend="onDragEnd(event)"
+        ondragover="onDragOver(${i},event)" ondrop="onDrop(${i},event)">
+      <div class="drag-handle">
+        <svg width="14" height="14" stroke="currentColor"><use href="#ic-drag"/></svg>
+      </div>
+      <div class="layer-check-col" onclick="toggleCheck(${i})">
+        <div class="lchk">${ck?'<svg width="10" height="10" stroke="#000" stroke-width="3"><use href="#ic-check"/></svg>':''}</div>
+      </div>
+      <div class="track-num">${i+1}</div>
+      <div class="layer-wave">
+        <canvas class="mini-wave" id="mw-${i}" width="36" height="28"></canvas>
+      </div>
+      <div class="layer-info" onclick="toggleCheck(${i})">
+        <div class="layer-name">${esc(f.name)}</div>
+        <div class="layer-badges">${badges.join('')}</div>
+      </div>
+      <div class="layer-actions">
+        <button class="lact-btn trim" title="Trim" onclick="event.stopPropagation();openTrim(${i})">
+          <svg width="14" height="14"><use href="#ic-scissors"/></svg>
+        </button>
+        <button class="lact-btn fx" title="FX" onclick="event.stopPropagation();toggleFX(${i})">
+          <svg width="14" height="14"><use href="#ic-sliders"/></svg>
+        </button>
+        <button class="lact-btn del" title="Remove" onclick="event.stopPropagation();removeFile(${i})">
+          <svg width="14" height="14"><use href="#ic-trash"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="layer-fx" id="fx-${i}">
+      <div class="fx-row">
+        <span class="fx-lbl">Volume</span>
+        <input type="range" min="0.1" max="2" step="0.05" value="${s.volume}"
+          oninput="FS[${i}].volume=+this.value;document.getElementById('fxv${i}').textContent=(+this.value).toFixed(1)+'x'">
+        <span class="fx-val" id="fxv${i}">${s.volume.toFixed(1)}x</span>
+      </div>
+      <div class="fx-row">
+        <span class="fx-lbl">Speed</span>
+        <input type="range" min="0.25" max="2" step="0.05" value="${s.speed}"
+          oninput="FS[${i}].speed=+this.value;document.getElementById('fxs${i}').textContent=(+this.value).toFixed(2)+'x'">
+        <span class="fx-val" id="fxs${i}">${s.speed.toFixed(2)}x</span>
+      </div>
+      <div class="fx-pills">
+        <div class="fx-pill ${s.fadeIn?'on':''}" onclick="FS[${i}].fadeIn=!FS[${i}].fadeIn;renderList()">Fade In</div>
+        <div class="fx-pill ${s.fadeOut?'on':''}" onclick="FS[${i}].fadeOut=!FS[${i}].fadeOut;renderList()">Fade Out</div>
+        <div class="fx-pill gold ${s.normalize?'on':''}" onclick="FS[${i}].normalize=!FS[${i}].normalize;renderList()">Normalize</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('out-name').value=SF.length===1?SF[0].name.replace(/\.wav$/i,''):'merged_output';
+
+  // Draw mini waveforms async
+  SF.forEach((_,i)=>drawMiniWave(i));
+}
+
+async function drawMiniWave(i){
+  const c=document.getElementById('mw-'+i);if(!c)return;
+  const ctx=c.getContext('2d'),W=c.width,H=c.height;
+  ctx.clearRect(0,0,W,H);
+  try{
+    const buf=await getBuf(i);
+    const data=buf.getChannelData(0),step=Math.max(1,Math.floor(data.length/W)),mid=H/2;
+    ctx.strokeStyle='rgba(0,212,255,0.6)';ctx.lineWidth=1;
+    for(let x=0;x<W;x++){let mx=0;for(let s=0;s<step;s++){const v=Math.abs(data[x*step+s]||0);if(v>mx)mx=v}const h=mx*mid*.85;ctx.beginPath();ctx.moveTo(x+.5,mid-h);ctx.lineTo(x+.5,mid+h);ctx.stroke()}
+  }catch(e){ctx.strokeStyle='var(--border)';ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke()}
+}
+
+// ══════════════════════════════════════
+//  AUDIO CORE
+// ══════════════════════════════════════
+async function decodeWav(file){const ab=await file.arrayBuffer();const ctx=new(window.AudioContext||window.webkitAudioContext)();const b=await ctx.decodeAudioData(ab);ctx.close();return b}
+async function getBuf(i){if(DC[i])return DC[i];const b=await decodeWav(SF[i]);DC[i]=b;if(FS[i].endTime===null){FS[i].endTime=b.duration;FS[i]._dur=b.duration}return b}
+
+async function processTrack(i){
+  const s=FS[i],buf=await getBuf(i),sr=buf.sampleRate,ch=buf.numberOfChannels;
+  const st=Math.max(0,s.startTime),en=Math.min(buf.duration,s.endTime??buf.duration);
+  const inDur=Math.max(0.01,en-st),outDur=inDur/s.speed;
+  const outSmp=Math.max(1,Math.ceil(outDur*sr));
+  const off=new OfflineAudioContext(ch,outSmp,sr);
+  let ng=1;
+  if(s.normalize){let pk=0;for(let c=0;c<ch;c++){const d=buf.getChannelData(c);for(let k=0;k<d.length;k++)pk=Math.max(pk,Math.abs(d[k]))}ng=pk>0?Math.min(2,.9/pk):1}
+  const gain=off.createGain();gain.gain.value=s.volume*ng;
+  if(s.fadeIn){const fd=Math.min(.8,outDur*.15);gain.gain.setValueAtTime(0,0);gain.gain.linearRampToValueAtTime(s.volume*ng,fd)}
+  if(s.fadeOut){const fd=Math.min(.8,outDur*.15);gain.gain.setValueAtTime(s.volume*ng,Math.max(0,outDur-fd));gain.gain.linearRampToValueAtTime(0,outDur)}
+  const src=off.createBufferSource();src.buffer=buf;src.playbackRate.value=s.speed;src.connect(gain);gain.connect(off.destination);src.start(0,st,inDur);
+  return off.startRendering();
+}
+
+function f2i16(f){const o=new Int16Array(f.length);for(let i=0;i<f.length;i++)o[i]=Math.max(-32768,Math.min(32767,Math.round(f[i]*32767)));return o}
+function encMP3(buf,br){const ch=Math.min(buf.numberOfChannels,2),sr=buf.sampleRate,enc=new lamejs.Mp3Encoder(ch,sr,+br);const L=f2i16(buf.getChannelData(0)),R=ch>1?f2i16(buf.getChannelData(1)):L;const ck=1152,mp3=[];for(let i=0;i<L.length;i+=ck){const lc=L.subarray(i,i+ck),rc=R.subarray(i,i+ck);const b=ch>1?enc.encodeBuffer(lc,rc):enc.encodeBuffer(lc);if(b.length)mp3.push(b)}const tail=enc.flush();if(tail.length)mp3.push(tail);return new Blob(mp3,{type:'audio/mpeg'})}
+async function mergeBufs(bufs){const sr=bufs[0].sampleRate,ch=Math.max(...bufs.map(b=>b.numberOfChannels)),tot=bufs.reduce((s,b)=>s+b.length,0);const off=new OfflineAudioContext(ch,tot,sr);let ofs=0;for(const b of bufs){const src=off.createBufferSource();src.buffer=b;src.connect(off.destination);src.start(ofs/sr);ofs+=b.length}return off.startRendering()}
+
+// ══════════════════════════════════════
+//  SAVE — use string ID
+// ══════════════════════════════════════
+async function saveFile(name,blob){
+  const ab=await blob.arrayBuffer();
+  // String ID so DOM id attributes work correctly
+  const id='f'+Date.now()+'r'+Math.floor(Math.random()*99999);
+  await dbSave({id,name,size:blob.size,date:new Date().toISOString(),data:ab});
+}
+
+// ══════════════════════════════════════
+//  CONVERT / MERGE
+// ══════════════════════════════════════
+async function doConvert(){
+  const ids=[...CF];if(!ids.length)return toast('No files selected!','error');
+  setProg(true,'Processing...');setBtns(true);
+  const br=document.getElementById('bitrate').value,base=document.getElementById('out-name').value.trim()||'output';
+  try{
+    for(let n=0;n<ids.length;n++){
+      setProgV(Math.round(n/ids.length*90),`Converting ${n+1}/${ids.length}...`);
+      const blob=encMP3(await processTrack(ids[n]),br);
+      await saveFile((ids.length===1?base:base+'_'+(n+1))+'.mp3',blob);
+    }
+    setProgV(100,'Done!');toast(`✓ ${ids.length} file(s) converted!`,'success');
+    setTimeout(()=>setProg(false),1500);updBadge();
+  }catch(e){setProg(false);toast('Error: '+e.message,'error');console.error(e)}finally{setBtns(false)}
+}
+
+async function doMerge(){
+  const ids=[...CF];if(ids.length<2)return toast('Select at least 2 files!','error');
+  setProg(true,'Decoding...');setBtns(true);
+  const br=document.getElementById('bitrate').value,base=document.getElementById('out-name').value.trim()||'merged';
+  try{
+    const bufs=[];
+    for(let n=0;n<ids.length;n++){setProgV(Math.round(n/ids.length*60),`Processing ${n+1}/${ids.length}...`);bufs.push(await processTrack(ids[n]))}
+    setProgV(68,'Merging tracks...');const merged=await mergeBufs(bufs);
+    setProgV(83,'Encoding MP3...');const blob=encMP3(merged,br);
+    setProgV(96,'Saving...');await saveFile(base+'.mp3',blob);
+    setProgV(100,'Done!');toast(`✓ ${ids.length} tracks merged!`,'success');
+    setTimeout(()=>setProg(false),1500);updBadge();
+  }catch(e){setProg(false);toast('Error: '+e.message,'error');console.error(e)}finally{setBtns(false)}
+}
+
+// ══════════════════════════════════════
+//  TRIM MODAL
+// ══════════════════════════════════════
+async function openTrim(i){
+  tIdx=i;tBuf=null;stopPrev();
+  document.getElementById('trim-modal').classList.add('show');
+  const wl=document.getElementById('wave-loading');wl.style.display='flex';
+  const canvas=document.getElementById('trim-canvas');canvas.style.visibility='hidden';
+  try{
+    tBuf=await getBuf(i);const s=FS[i];
+    tSR=s.startTime/tBuf.duration;tER=(s.endTime??tBuf.duration)/tBuf.duration;
+    wl.style.display='none';canvas.style.visibility='visible';
+    setupCanvas();drawWave();updTrimUI();
+  }catch(e){wl.innerHTML='<span style="color:var(--red)">Decode failed</span>';toast('Error: '+e.message,'error')}
+}
+function closeTrimModal(){stopPrev();document.getElementById('trim-modal').classList.remove('show');tBuf=null;tIdx=-1}
+function setupCanvas(){const c=document.getElementById('trim-canvas'),w=document.getElementById('wave-wrap');c.width=w.offsetWidth||window.innerWidth-28;c.height=120}
+function drawWave(){
+  if(!tBuf)return;
+  const canvas=document.getElementById('trim-canvas'),ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height;
+  const data=tBuf.getChannelData(0),step=Math.max(1,Math.floor(data.length/W)),mid=H/2;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#0f1419';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(30,45,61,.9)';ctx.lineWidth=1;
+  for(let x=0;x<W;x++){let mx=0;for(let s=0;s<step;s++){const v=Math.abs(data[x*step+s]||0);if(v>mx)mx=v}const h=mx*mid*.88;ctx.beginPath();ctx.moveTo(x+.5,mid-h);ctx.lineTo(x+.5,mid+h);ctx.stroke()}
+  const sx=Math.round(tSR*W),ex=Math.round(tER*W);
+  ctx.fillStyle='rgba(0,212,255,.06)';ctx.fillRect(sx,0,ex-sx,H);
+  ctx.strokeStyle='rgba(0,212,255,.72)';ctx.lineWidth=1;
+  for(let x=sx;x<ex;x++){let mx=0;for(let s=0;s<step;s++){const v=Math.abs(data[x*step+s]||0);if(v>mx)mx=v}const h=mx*mid*.88;ctx.beginPath();ctx.moveTo(x+.5,mid-h);ctx.lineTo(x+.5,mid+h);ctx.stroke()}
+  ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,mid);ctx.lineTo(W,mid);ctx.stroke();
+  // Start handle
+  ctx.strokeStyle='#22c55e';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(sx,0);ctx.lineTo(sx,H);ctx.stroke();
+  ctx.fillStyle='#22c55e';ctx.beginPath();ctx.moveTo(sx,0);ctx.lineTo(sx+12,0);ctx.lineTo(sx+12,18);ctx.lineTo(sx,18);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#000';ctx.font='bold 10px monospace';ctx.fillText('▶',sx+2,13);
+  // End handle
+  ctx.strokeStyle='#ef4444';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(ex,0);ctx.lineTo(ex,H);ctx.stroke();
+  ctx.fillStyle='#ef4444';ctx.beginPath();ctx.moveTo(ex,0);ctx.lineTo(ex-12,0);ctx.lineTo(ex-12,18);ctx.lineTo(ex,18);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#fff';ctx.fillText('◀',ex-11,13);
+}
+function updTrimUI(){
+  if(!tBuf)return;
+  const dur=tBuf.duration,st=tSR*dur,en=tER*dur;
+  document.getElementById('t-start').textContent=ftmFull(st);
+  document.getElementById('t-end').textContent=ftmFull(en);
+  document.getElementById('t-dur').textContent=ftmFull(en-st);
+  document.getElementById('fine-start').value=st.toFixed(3);
+  document.getElementById('fine-end').value=en.toFixed(3);
+  const pct=((en-st)/dur*100).toFixed(1);
+  document.getElementById('rchips').innerHTML=`<span class="rchip">Total: ${ftmFull(dur)}</span><span class="rchip">Selected: ${pct}%</span><span class="rchip">~${fsz(Math.round((en-st)*tBuf.numberOfChannels*tBuf.sampleRate*2))}</span>`;
+}
+function onFineInput(){if(!tBuf)return;const dur=tBuf.duration;let st=parseFloat(document.getElementById('fine-start').value)||0,en=parseFloat(document.getElementById('fine-end').value)||dur;st=Math.max(0,Math.min(st,dur-.01));en=Math.max(st+.01,Math.min(en,dur));tSR=st/dur;tER=en/dur;drawWave();updTrimUI()}
+function resetTrim(){tSR=0;tER=1;drawWave();updTrimUI()}
+function applyTrim(){if(tIdx<0||!tBuf)return;FS[tIdx].startTime=tSR*tBuf.duration;FS[tIdx].endTime=tER*tBuf.duration;FS[tIdx]._dur=tBuf.duration;toast('Trim applied!','success');closeTrimModal();renderList()}
+function stopPrev(){if(tPrevSrc){try{tPrevSrc.stop()}catch(e){}tPrevSrc=null}if(tPrevCtx){try{tPrevCtx.close()}catch(e){}tPrevCtx=null}}
+function previewTrim(){if(!tBuf)return;stopPrev();const dur=tBuf.duration,st=tSR*dur,en=tER*dur;const ac=new(window.AudioContext||window.webkitAudioContext)();tPrevCtx=ac;const src=ac.createBufferSource();src.buffer=tBuf;src.connect(ac.destination);src.start(0,st,en-st);tPrevSrc=src;src.onended=stopPrev;toast('Playing preview...','info')}
+function autoTrimSilence(){if(!tBuf)return;const data=tBuf.getChannelData(0),sr=tBuf.sampleRate,len=data.length,thr=0.008;let s=0,e=len-1;while(s<len&&Math.abs(data[s])<thr)s++;while(e>s&&Math.abs(data[e])<thr)e--;s=Math.max(0,s-Math.round(sr*.05));e=Math.min(len-1,e+Math.round(sr*.05));tSR=s/len;tER=e/len;drawWave();updTrimUI();toast('Silence removed!','success')}
+
+// Canvas pointer
+function getRatio(cx){const r=document.getElementById('trim-canvas').getBoundingClientRect();return Math.max(0,Math.min(1,(cx-r.left)/r.width))}
+function onPtrStart(cx){const r=getRatio(cx),W=document.getElementById('trim-canvas').getBoundingClientRect().width,z=20/W,ds=Math.abs(r-tSR),de=Math.abs(r-tER);if(ds<z&&ds<=de)tDrag='start';else if(de<z)tDrag='end';else tDrag=null}
+function onPtrMove(cx){if(!tDrag)return;const r=getRatio(cx);if(tDrag==='start')tSR=Math.max(0,Math.min(r,tER-.005));else tER=Math.min(1,Math.max(r,tSR+.005));drawWave();updTrimUI()}
+const TC=document.getElementById('trim-canvas');
+TC.addEventListener('mousedown',e=>onPtrStart(e.clientX));
+document.addEventListener('mousemove',e=>{if(tDrag)onPtrMove(e.clientX)});
+document.addEventListener('mouseup',()=>tDrag=null);
+TC.addEventListener('touchstart',e=>{e.preventDefault();onPtrStart(e.touches[0].clientX)},{passive:false});
+TC.addEventListener('touchmove',e=>{e.preventDefault();onPtrMove(e.touches[0].clientX)},{passive:false});
+TC.addEventListener('touchend',()=>tDrag=null);
+window.addEventListener('resize',()=>{if(tBuf&&document.getElementById('trim-modal').classList.contains('show')){setupCanvas();drawWave()}});
+
+// ══════════════════════════════════════
+//  LIBRARY — fixed: no float IDs in DOM
+// ══════════════════════════════════════
+async function renderLib(){
+  const files=await dbAll();files.sort((a,b)=>b.date>a.date?-1:1);
+  document.getElementById('lib-count').textContent=files.length+' file'+(files.length!==1?'s':'');
+  const list=document.getElementById('lib-list');
+  if(!files.length){
+    list.innerHTML=`<div class="empty"><svg width="48" height="48" stroke="var(--muted)"><use href="#ic-music"/></svg><div class="empty-txt">No files yet.<br>Convert something first!</div></div>`;
+    return;
+  }
+  // Store files in a window map for safe access by index
+  window._libFiles=files;
+  list.innerHTML=files.map((f,idx)=>`<div class="lib-card">
+    <div class="lib-top">
+      <div class="lib-icon-wrap"><svg width="18" height="18" stroke="var(--accent)"><use href="#ic-music"/></svg></div>
+      <div style="flex:1;min-width:0">
+        <div class="lib-name">${esc(f.name)}</div>
+        <div class="lib-meta">${fsz(f.size)} · ${fdt(f.date)}</div>
+      </div>
+    </div>
+    <div id="plr-${idx}" class="lib-player-wrap"></div>
+    <div class="lib-actions">
+      <button class="lib-btn play" onclick="playFile(${idx})">
+        <svg><use href="#ic-play"/></svg>Play
+      </button>
+      <button class="lib-btn dl" onclick="dlFile(${idx})">
+        <svg><use href="#ic-download"/></svg>Save
+      </button>
+      <button class="lib-btn ren" onclick="openRenameModal(${JSON.stringify(f.id)},${JSON.stringify(f.name)})">
+        <svg><use href="#ic-edit"/></svg>Rename
+      </button>
+      <button class="lib-btn del" onclick="delFile(${JSON.stringify(f.id)})">
+        <svg><use href="#ic-trash"/></svg>Delete
+      </button>
+    </div>
+  </div>`).join('');
+  updBadge(files.length);
+}
+
+function playFile(idx){
+  const f=window._libFiles&&window._libFiles[idx];if(!f)return;
+  const p=document.getElementById('plr-'+idx);
+  if(p.classList.contains('show')){p.classList.remove('show');p.innerHTML='';return}
+  // Build blob URL from ArrayBuffer
+  const blob=new Blob([f.data],{type:'audio/mpeg'});
+  const url=URL.createObjectURL(blob);
+  const audio=document.createElement('audio');
+  audio.controls=true;audio.autoplay=true;audio.src=url;
+  audio.onended=()=>URL.revokeObjectURL(url);
+  p.innerHTML='';p.appendChild(audio);p.classList.add('show');
+}
+
+function dlFile(idx){
+  const f=window._libFiles&&window._libFiles[idx];if(!f)return;
+  const blob=new Blob([f.data],{type:'audio/mpeg'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=f.name;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);
+  // Revoke after small delay to let download start
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  toast('Downloading '+f.name,'info');
+}
+
+async function delFile(id){await dbDel(id);toast('Deleted','info');renderLib()}
+
+// ══════════════════════════════════════
+//  RENAME
+// ══════════════════════════════════════
+function openRenameModal(id,name){renameTarget=id;document.getElementById('rename-input').value=name.replace(/\.mp3$/i,'');document.getElementById('rename-modal').classList.add('show');setTimeout(()=>document.getElementById('rename-input').focus(),100)}
+function closeRenameModal(){document.getElementById('rename-modal').classList.remove('show');renameTarget=null}
+async function confirmRename(){
+  if(!renameTarget)return;const n=document.getElementById('rename-input').value.trim();
+  if(!n)return toast('Name cannot be empty!','error');
+  await dbUpd(renameTarget,{name:n.endsWith('.mp3')?n:n+'.mp3'});closeRenameModal();toast('Renamed!','success');renderLib();
+}
+document.getElementById('rename-modal').addEventListener('click',function(e){if(e.target===this)closeRenameModal()});
+
+// ══════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════
+function setProg(show,txt){document.getElementById('prog-wrap').classList.toggle('show',show);if(txt)document.getElementById('prog-txt').textContent=txt;if(!show)document.getElementById('prog-fill').style.width='0%'}
+function setProgV(p,t){document.getElementById('prog-fill').style.width=p+'%';document.getElementById('prog-pct').textContent=p+'%';if(t)document.getElementById('prog-txt').textContent=t}
+function setBtns(d){document.getElementById('btn-convert').disabled=d;document.getElementById('btn-merge').disabled=d}
+let _tt;function toast(msg,type='info'){const el=document.getElementById('toast');el.textContent=msg;el.className='show '+type;clearTimeout(_tt);_tt=setTimeout(()=>el.className='',3000)}
+async function updBadge(n){if(n===undefined){const f=await dbAll();n=f.length}const b=document.getElementById('badge');if(n>0){b.style.display='inline-block';b.textContent=n}else b.style.display='none'}
+function fsz(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB'}
+function ftm(s){if(s==null)return '?';const m=Math.floor(s/60);return m+':'+(s%60<10?'0':'')+Math.floor(s%60)}
+function ftmFull(s){const m=Math.floor(s/60),sc=s%60;return m+':'+(sc<10?'0':'')+sc.toFixed(3)}
+function fdt(iso){const d=new Date(iso);return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+(async()=>{await openDB();await updBadge()})();
+
+// Register Service Worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.log('SW failed:', err));
+  });
+}
+
+// PWA install prompt
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show install banner after 3 seconds
+  setTimeout(() => {
+    if(deferredPrompt) showInstallBanner();
+  }, 3000);
+});
+
+function showInstallBanner(){
+  const banner = document.createElement('div');
+  banner.id = 'install-banner';
+  banner.style.cssText = `
+    position:fixed;bottom:0;left:0;right:0;z-index:1000;
+    background:#0f1419;border-top:1px solid #00d4ff;
+    padding:14px 18px;display:flex;align-items:center;gap:12px;
+    animation:slideUp .3s ease;
+  `;
+  banner.innerHTML = `
+    <style>@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}</style>
+    <div style="flex:1">
+      <div style="font-family:'Orbitron',monospace;font-size:12px;color:#00d4ff;font-weight:700">Install MutuCraft</div>
+      <div style="font-size:10px;color:#6b8aaa;font-family:'JetBrains Mono',monospace;margin-top:2px">Add to home screen for offline use</div>
+    </div>
+    <button onclick="installApp()" style="padding:9px 16px;background:linear-gradient(135deg,#00d4ff,#0099bb);border:none;border-radius:9px;font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;color:#000;cursor:pointer">Install</button>
+    <button onclick="document.getElementById('install-banner').remove()" style="background:none;border:none;color:#4a6080;cursor:pointer;font-size:18px;padding:4px">✕</button>
+  `;
+  document.body.appendChild(banner);
+}
+
+async function installApp(){
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  const {outcome} = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  const b = document.getElementById('install-banner');
+  if(b) b.remove();
+  if(outcome==='accepted') toast('MutuCraft installed!','success');
+}
+</script>
+</body>
+</html>
